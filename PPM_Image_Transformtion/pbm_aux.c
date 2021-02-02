@@ -31,6 +31,15 @@ PBMImage * new_pbmimage( unsigned int w, unsigned int h )
 
 PGMImage * new_pgmimage( unsigned int w, unsigned int h, unsigned int m )
 {
+    PGMImage* image = malloc(sizeof(PGMImage));
+    image -> width = w;
+    image -> height = h;
+    image -> max = m;
+    image -> pixmap = malloc(h * sizeof(int*));
+    for(int i = 0; i < h; i++){
+        image -> pixmap[i] = malloc(w * sizeof(int));
+    }
+    return image;
 }
 
 void del_ppmimage( PPMImage * p )

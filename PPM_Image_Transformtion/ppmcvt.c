@@ -7,7 +7,7 @@
 typedef struct
 {
     char mode;
-    char* arg;
+    int arg;
     char* infile_name;
     char* outfile_name;
     
@@ -81,9 +81,9 @@ Option read_options(int argc, char*argv[]){
     int o;
     
     while( (o=getopt(argc,argv,"bg:i:r:smt:n:o")) != -1){
-        if(op_found){    // check if multiple options are given
+        if(op_found && o != 'o'){    // check if multiple options are given
             fprintf(stderr, "Error: Multiple transformations specified\n");
-            exit(-1);
+            exit(1);
         }
         switch (o) {
             case 'b':
@@ -92,7 +92,16 @@ Option read_options(int argc, char*argv[]){
                 op_found = 1;
                 break;
             case 'g':
-                
+                option.mode = 'g';
+                op_found = 1;
+                char* ptr;
+                int num;
+                num = (int)strtol(optarg, &ptr, 10);
+                if(num > 65535){
+                    fprintf(stderr, "Error: Invalid max grayscale pixel value: %d; must be less than 65,536\n", num);
+                    exit(1);
+                }
+                option.arg = num;
                 break;
             case 'i':
                 
@@ -120,7 +129,7 @@ Option read_options(int argc, char*argv[]){
                     option.mode = 'b';
                 if ((optind + 2) > argc){
                     fprintf(stderr, "Output file and Input file required\n");
-                    exit(0);
+                    exit(1);
                 }
                 option.outfile_name = argv[optind];       //not necessarily follow o.
                 option.infile_name = argv[optind + 1];
@@ -128,14 +137,14 @@ Option read_options(int argc, char*argv[]){
                 printf("inputfilename:%s\n", argv[optind+1]);
                 break;
             default:
-                printf("unexpected arg");
+                printf("Usage: ppmcvt [-bgirsmtno] [FILE]\n");
                 break;
         }
     }
     
     if (o_find == 0) {
         printf("Expected an output opiton -o\n");
-        exit(-1);
+        exit(1);
     }
     
     return option;
@@ -168,8 +177,11 @@ void option_b(Option op, PPMImage* image_in){  //convert input file to a Portabl
     //alloc new outfile
     //transform
     //write
+    float PPMMax = (float)image_in -> max;
+    float PPMMaxabovetwo = PPMMax/2;
+    
     PBMImage* image_out = new_pbmimage(image_in -> width, image_in -> height);
-    helper_check_PPMIImage(image_in);
+//    helper_check_PPMIImage(image_in);
     //To compute black and white bits from RGB pixels use: 𝐴𝑣𝑒𝑟𝑎𝑔𝑒(𝑅 + 𝐺 + 𝐵) < 𝑃𝑃𝑀𝑀𝑎𝑥/2
     for (int r = 0; r < image_in -> height; r++) {
         for (int c = 0; c < image_in -> width; c++){
@@ -178,15 +190,14 @@ void option_b(Option op, PPMImage* image_in){  //convert input file to a Portabl
                 RGB_sum = RGB_sum + (float)image_in -> pixmap[color][r][c];
             }
             float average_RGB = RGB_sum / 3;
-            float PPMMax = (float)image_in -> max;
-            float PPMMaxabovetwo = PPMMax/2;
-            printf("RGB/3 = %f\n", average_RGB);
+            
+//            printf("RGB/3 = %f\n", average_RGB);
             if (average_RGB < PPMMax/2){
-                image_out -> pixmap[r][c] = 0;
-                printf("[%d][%d] is 0\n\n", r,c);
-            } else {
                 image_out -> pixmap[r][c] = 1;
-                printf("[%d][%d] is 1\n\n", r,c);
+//                printf("[%d][%d] is 0\n\n", r,c);
+            } else {
+                image_out -> pixmap[r][c] = 0;
+//                printf("[%d][%d] is 1\n\n", r,c);
             }
         }
     }
@@ -198,6 +209,28 @@ void option_b(Option op, PPMImage* image_in){  //convert input file to a Portabl
 
 
 void option_g(Option op, PPMImage* image_in){
+    //convert input file to a Portable Gray Map (PGM) file using the specified max grayscale pixel value [1-65535].
+    int h = image_in -> height;
+    int w = image_in -> width;
+    int max = image_in -> max;
+    int PGMMax = op.arg;
     
+    PGMImage* image_out = new_pgmimage(image_in -> width, image_in -> height, image_in -> max);
     
+    //To compute grayscale pixels from RGB pixels use: (𝐴𝑣𝑒𝑟𝑎𝑔𝑒(𝑅 + 𝐺 + 𝐵)/𝑃𝑃𝑀𝑀𝑎𝑥) × 𝑃𝐺𝑀𝑀𝑎𝑥
+    float PPMMax = (float)max;
+    for (int r = 0; r < h; r++) {
+        for (int c = 0; c < w; c++){
+            float RGB_sum = 0;
+            for (int color = 0; color < 3; color++){
+                RGB_sum = RGB_sum + (float)image_in -> pixmap[color][r][c];
+            }
+            
+            float average_RGB = RGB_sum / 3;
+            image_out -> pixmap[r][c] = (int)((average_RGB / PPMMax) * PGMMax);
+        
+        }
+    }
+    
+    write_pgmfile(image_out, op.outfile_name);
 }
