@@ -44,13 +44,16 @@ PGMImage * new_pgmimage( unsigned int w, unsigned int h, unsigned int m )
 
 void del_ppmimage( PPMImage * p )
 {
+    free(p);
 }
 
 void del_pgmimage( PGMImage * p )
 {
+    free(p);
 }
 
 void del_pbmimage( PBMImage * p )
 {
+    free(p);
 }
 

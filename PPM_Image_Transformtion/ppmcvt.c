@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 
 typedef struct
@@ -15,8 +16,8 @@ typedef struct
 
 void option_b(Option op, PPMImage* image_in); //convert input file to a Portable Bitmap (PBM) file
 void option_g(Option op, PPMImage* image_in);//convert input file to a Portable Gray Map (PGM) file using the specified max grayscale pixel value [1-65535].
-void option_i();//isolate the specified RGB channel. Valid channels are “red”, “green”, or “blue”.
-void option_r();//remove the specified RGB channel. Valid channels are “red”, “green”, or “blue”.
+void option_i(Option op, PPMImage* image_in);//isolate the specified RGB channel. Valid channels are “red”, “green”, or “blue”.
+void option_r(Option op, PPMImage* image_in);//remove the specified RGB channel. Valid channels are “red”, “green”, or “blue”.
 void option_s();
 void option_m();
 void option_t();
@@ -45,10 +46,10 @@ int main( int argc, char *argv[] )
             option_g(option, image_in);
             break;
         case 'i':
-            
+            option_i(option, image_in);
             break;
         case 'r':
-            
+            option_r(option, image_in);
             break;
         case 's':
             
@@ -87,10 +88,10 @@ Option read_options(int argc, char*argv[]){
         }
         switch (o) {
             case 'b':
-                
                 option.mode = 'b';
                 op_found = 1;
                 break;
+                
             case 'g':
                 option.mode = 'g';
                 op_found = 1;
@@ -103,24 +104,52 @@ Option read_options(int argc, char*argv[]){
                 }
                 option.arg = num;
                 break;
+                
             case 'i':
-                
+                option.mode = 'i';
+                op_found = 1;
+                if(strcmp(optarg, "red") == 0){
+                    option.arg = 0;
+                } else if(strcmp(optarg, "green") == 0){
+                    option.arg = 1;
+                } else if(strcmp(optarg, "blue") == 0){
+                    option.arg = 2;
+                } else {
+                    fprintf(stderr, "Error: Invalid channel specification: (%s); should be 'red', 'green' or 'blue'\n", optarg);
+                }
                 break;
+                
             case 'r':
-                
+                option.mode = 'r';
+                op_found = 1;
+                if(strcmp(optarg, "red") == 0){
+                    option.arg = 0;
+                } else if(strcmp(optarg, "green") == 0){
+                    option.arg = 1;
+                } else if(strcmp(optarg, "blue") == 0){
+                    option.arg = 2;
+                } else {
+                    fprintf(stderr, "Error: Invalid channel specification: (%s); should be 'red', 'green' or 'blue'\n", optarg);
+                }
                 break;
+                break;
+                
             case 's':
                 
                 break;
+                
             case 'm':
                 
                 break;
+                
             case 't':
                
                 break;
+                
             case 'n':
                 
                 break;
+                
             case 'o': // assign the output file.
                 o_find = 1;
                 
@@ -203,7 +232,8 @@ void option_b(Option op, PPMImage* image_in){  //convert input file to a Portabl
     }
     
     write_pbmfile(image_out, op.outfile_name);
-    
+    del_ppmimage(image_in);
+    del_pbmimage(image_out);
     
 }
 
@@ -233,4 +263,42 @@ void option_g(Option op, PPMImage* image_in){
     }
     
     write_pgmfile(image_out, op.outfile_name);
+    del_ppmimage(image_in);
+    del_pgmimage(image_out);
+}
+
+
+void option_i(Option op, PPMImage* image_in){
+    //isolate the specified RGB channel. Valid channels are “red”, “green”, or “blue”.
+    
+    int h = image_in -> height;
+    int w = image_in -> width;
+    int max = image_in -> max;
+    for (int r = 0; r < h; r++){
+        for (int c = 0; c < w; c++){
+            for (int color = 0; color < 3; color++ ){
+                if(color == op.arg)
+                    continue;
+                image_in -> pixmap[color][r][c] = 0;
+            }
+            
+        }
+    }
+    write_ppmfile(image_in, op.outfile_name);
+    del_ppmimage(image_in);
+    
+}
+
+void option_r(Option op, PPMImage* image_in){
+    int color = op.arg;
+    int h = image_in -> height;
+    int w = image_in -> width;
+    int max = image_in -> max;
+    for (int r = 0; r < h; r++){
+        for (int c = 0; c < w; c++){
+            image_in -> pixmap[color][r][c] = 0;
+        }
+    }
+    write_ppmfile(image_in, op.outfile_name);
+    del_ppmimage(image_in);
 }
