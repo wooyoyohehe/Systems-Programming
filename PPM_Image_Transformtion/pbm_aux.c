@@ -44,16 +44,32 @@ PGMImage * new_pgmimage( unsigned int w, unsigned int h, unsigned int m )
 
 void del_ppmimage( PPMImage * p )
 {
+    for(int color = 0; color < 3; color++){
+        for(int i = 0; i < p -> height; i++){
+            free(p -> pixmap[color][i]);
+        }
+        free(p -> pixmap[color]);
+
+    }
+//    free(p -> pixmap);  used pixmap[3] to declear, can't use free.
     free(p);
 }
 
 void del_pgmimage( PGMImage * p )
 {
+    for(int i = 0; i < p -> height; i++){
+        free(p -> pixmap[i]);
+    }
+    free(p -> pixmap);
     free(p);
 }
 
 void del_pbmimage( PBMImage * p )
 {
+    for(int i = 0; i < p -> height; i++){
+        free(p -> pixmap[i]);
+    }
+    free(p -> pixmap);
     free(p);
 }
 
