@@ -115,6 +115,7 @@ Option read_options(int argc, char*argv[]){
                     option.arg = 2;
                 } else {
                     fprintf(stderr, "Error: Invalid channel specification: (%s); should be 'red', 'green' or 'blue'\n", optarg);
+                    exit(1);
                 }
                 break;
                 
@@ -129,8 +130,8 @@ Option read_options(int argc, char*argv[]){
                     option.arg = 2;
                 } else {
                     fprintf(stderr, "Error: Invalid channel specification: (%s); should be 'red', 'green' or 'blue'\n", optarg);
+                    exit(1);
                 }
-                break;
                 break;
                 
             case 's':
@@ -149,7 +150,7 @@ Option read_options(int argc, char*argv[]){
                 char* ptr2;
                 int num2;
                 num2 = (int)strtol(optarg, &ptr2, 10);
-                if(num > 8){
+                if(num2 > 8 || num2 < 1){
                     fprintf(stderr, "Error: Invalid scale factor: %d; must be 1-8\n", num2);
                     exit(1);
                 }
@@ -162,7 +163,7 @@ Option read_options(int argc, char*argv[]){
                 char* ptr3;
                 int num3;
                 num3 = (int)strtol(optarg, &ptr3, 10);
-                if(num > 8){
+                if(num3 > 8 || num3 < 1){
                     fprintf(stderr, "Error: Invalid scale factor: %d; must be 1-8\n", num3);
                     exit(1);
                 }
@@ -178,7 +179,8 @@ Option read_options(int argc, char*argv[]){
 //                printf("inputfilename:%s\n", argv[optind+1]);
                 break;
             default:
-                printf("Usage: ppmcvt [-bgirsmtno] [FILE]\n");
+                fprintf(stderr, "Usage: ppmcvt [-bgirsmtno] [FILE]\n");
+                exit(1);
                 break;
         }
     }
@@ -193,7 +195,7 @@ Option read_options(int argc, char*argv[]){
         option.mode = 'b';
     
     if (o_find == 0) {
-        printf("Error: No output file specified\n");
+        fprintf(stderr, "Error: No output file specified\n");
         exit(1);
     }
     
