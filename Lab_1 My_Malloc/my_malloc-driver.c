@@ -27,5 +27,9 @@ int main(int argc, const char * argv[])
     *(B+8192) = 'c';
     printf("B[8193] = %c\n", *(B+8192));
     
+    my_free(A);
+    printf("A freed\n");
+    my_free(B);
+    
     return 0;
 }

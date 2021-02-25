@@ -24,16 +24,19 @@ void* find_chunk(uint32_t size);
 void split_chunk(void* A, uint32_t size, uint32_t chunk_size);
 
 void insert_node(FreeListNode L); //insert the node in ascending sequence
+
 void remove_node(FreeListNode L);
 
-void* find_node(uint32_t sz);
+int ifAdjacent(void* curr, void* next);
+
+void merge(void* ptr1, void* ptr2);
 
 void *my_malloc(uint32_t size)
 {
     //total chunk size including header and padding
     uint32_t needed_size = calculate_size(size);
     void* A = find_chunk(needed_size);
-    //if sbrk failed my_errno will be MYENOMEN
+    //if sbrk failed my_errno will be MYENOMEM
     if (my_errno == MYENOMEM)
         return NULL;
 //    uint32_t freeChunkSize = *((int*)A - 1);
@@ -50,23 +53,65 @@ void *my_malloc(uint32_t size)
     uint32_t* magicNumber = (uint32_t*)((char*)A + 4);
     *magicNumber = MAGICNUM;
     
+    //return the address after header
+    A = (char*)A + 8;
     
     return A;
 }
       
+
 void my_free(void *ptr)
 {
+    if (ptr == NULL) {
+        my_errno = MYBADFREEPTR;
+        return;
+    }
+    
+    uint32_t* num = (uint32_t*)((char*)ptr - 4);
+    
+    if (*num != MAGICNUM) {
+        my_errno = MYBADFREEPTR;
+        return;
+    }
+    
+    FreeListNode freeNode;
+    freeNode = (FreeListNode)((char*)ptr -  8);
+    freeNode -> size = *num;
+    freeNode -> flink = NULL;
+    
+    insert_node(freeNode);
+    coalesce_free_list();
+}
+
+int ifAdjacent(void* curr, void* next) {
+    uint32_t* size = (uint32_t*)((char*)curr + 4);
+    
+    if (((char*)curr + *size) == next)
+        return 1;
+    else
+        return 0;
+}
+
+void merge(void* ptr1, void* ptr2) {
+    uint32_t* size1 = (uint32_t*)((char*)ptr1 + 4);
+    uint32_t* size2 = (uint32_t*)((char*)ptr2 + 4);
+    uint32_t newSize = *size1 + *size2;
+
+    *size1 = newSize;
+    remove_node(ptr2);
     
 }
 
-FreeListNode free_list_begin()
-{
-    return Start;
-}
 
 void coalesce_free_list()
 {
-    
+//    printf("\ncoalesce list entered\n");
+    FreeListNode L = free_list_begin();
+    while(L -> flink != NULL) {
+        if(ifAdjacent(L, L->flink))
+            merge(L, L-> flink);
+        L = L -> flink;
+    }
 }
 
 uint32_t calculate_size(uint32_t sz){
@@ -81,7 +126,7 @@ void* find_chunk(uint32_t size){
     FreeListNode L = free_list_begin();
     uint32_t chunk_size;
     while(L != NULL){
-        printf("Free List size: %d\n" , L -> size);
+//        printf("Free List size: %d\n" , L -> size);
         if (size <= L -> size){
             target = L;  // The address
             //delete from freelist
@@ -94,7 +139,7 @@ void* find_chunk(uint32_t size){
     // No avaliable chunk, call sbrk, check sbrk return.
     if (target == NULL) {
         void* temp;
-        printf("no avaliable chunk, sbrk called\n");
+//        printf("no avaliable chunk, sbrk called\n");
         
         if (size <= 8192) {
             temp = sbrk(8192);
@@ -128,6 +173,7 @@ void* find_chunk(uint32_t size){
 }
 
 void insert_node(FreeListNode N){
+//    printf("\ninsert node begin\n");
     FreeListNode L = free_list_begin();
     if (L == NULL) {               //if N is the first element
         Start = N;
@@ -155,9 +201,11 @@ void insert_node(FreeListNode N){
             L -> flink = N;
             return;
         }
+        L = L -> flink;
     }
     // reached the end
     L -> flink = N;
+//    printf("insert node end\n");
 }
 
 void remove_node(FreeListNode N){
@@ -172,7 +220,7 @@ void remove_node(FreeListNode N){
             return;
         }
     }
-    fprintf(stderr, "remove_node failed\n");
+//    fprintf(stderr, "remove_node failed\n");
 }
 
 void split_chunk(void* A, uint32_t size, uint32_t chunk_size){
@@ -196,4 +244,9 @@ void split_chunk(void* A, uint32_t size, uint32_t chunk_size){
     //put node into the free List
     insert_node(remainderNode);
 
+}
+
+FreeListNode free_list_begin()
+{
+    return Start;
 }
