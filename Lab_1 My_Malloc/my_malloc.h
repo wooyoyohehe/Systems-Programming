@@ -36,4 +36,7 @@ FreeListNode free_list_begin(void);
 //coalesce_free_list(): merge adjacent chunks on the free list
 void coalesce_free_list(void);
 
+void helper_print_freeList();
+
+
 #endif /* my_malloc_h */
