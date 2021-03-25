@@ -60,23 +60,8 @@ void create_archive_helper(FILE* arch, const char* dir_name){
     struct dirent *de;
     char * fullname;
     DIR *d;
-//    //===================TEST========================
-//        printf("DIR_NAME before opendir: %s\n length: %d\n", dir_name, strlen(dir_name));
-//        int tmp = strlen(dir_name);
-//        for(int i = 0; i < tmp; i++)
-//        printf("[%d]:%c ", i, dir_name[i]);
-//        printf("\n");
-//    //============================================
     
     d = opendir(dir_name);
-    
-//    //=================TEST===========================
-//        printf("DIR_NAME after opendir: %s\n length: %d\n", dir_name, strlen(dir_name));
-//        tmp = strlen(dir_name);
-//        for(int i = 0; i < tmp; i++)
-//        printf("[%d]:%c ", i, dir_name[i]);
-//        printf("\n\n");
-//    //============================================
     
     if (d == NULL) {
         fprintf(stderr, "Directory Failure %s\n", dir_name);
@@ -85,7 +70,8 @@ void create_archive_helper(FILE* arch, const char* dir_name){
     
     for (de = readdir(d); de != NULL; de = readdir(d)) {
 
-        unsigned int namesize = strlen(dir_name) + strlen(de ->d_name) + 2; //added a "/" char
+        //combine two name to generate the path
+        unsigned int namesize = strlen(dir_name) + strlen(de ->d_name) + 2; //added a "/" char and a null at the end of string.
         fullname = (char *)malloc(sizeof(char)*namesize);
         sprintf(fullname, "%s/%s", dir_name, de->d_name);
         
@@ -148,6 +134,7 @@ void create_archive_helper(FILE* arch, const char* dir_name){
             }
         } else {
             //inode seen just put number length and name
+            
             unsigned long inode = buf.st_ino;
             fwrite (&inode, 8, 1, arch);
             int name_l = sizeof (fullname);
@@ -192,17 +179,16 @@ void print_tar(char* arch_name) {
     
     //read and prin
     while (!feof(tar)) {
-//        fread(&inode, 8, 1, tar);
-        fread(&inode, 8, 1, tar);
+        
+        fread(&inode, 1, 8, tar);
+        //only by having accessed the EOF can the feof know if it reaches the end.
+        if (feof(tar))
+            continue;
 
         fread(&name_length, 4, 1, tar);
 
         name = (char*)malloc(sizeof(char)*name_length);
-
-//        int n = fread(name, 1, name_length, tar);
-//        if (n != name_length) {
-//            fprintf(stderr, "Failed to read enought bytes\n ask %d, returned %d", name_length, n);
-//        }
+        int n = fread(name, 1, name_length, tar);
         
         
         if (!get_inode(inode)) {
