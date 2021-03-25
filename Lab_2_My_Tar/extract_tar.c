@@ -80,11 +80,11 @@ void extract (char* arch_name) {
             if (S_ISDIR(mode)) {
                 //is directory
                 printf("%s/ -- inode: %lu, mode: %o, mtime: %ld\n", name, inode, mode, mtime);
-                if (mkdir(name, 0700)) {
+                if (mkdir(name, mode)) {
                     perror("mkdir failed \n");
                 }
                 utimes(name, times);
-                chmod(name, mode);
+//                chmod(name, mode);
                 
             }  else {
                 //regular file and executable
