@@ -91,10 +91,6 @@ Option read_options(int argc, char* argv[]) {
         option.dir_name = argv[optind];
     }
     
-//    struct stat buf;
-//
-//    int exists = stat(option.dir_name, &buf);
-    
     
     return option;
 }
@@ -104,14 +100,8 @@ Option read_options(int argc, char* argv[]) {
 int main(int argc, char *argv[]) {
     Option option = read_options(argc, argv);
     
-//    printf("%c\n", option.mode);
-//    printf("%s\n", option.dir_name);
-//    printf("%s\n", option.arch_name);
-    
     switch (option.mode) {
         case 'c':
-            //test
-//            get_size(option.dir_name);
             create_archive(option.dir_name, option.arch_name);
             break;
         case 't':
@@ -123,56 +113,5 @@ int main(int argc, char *argv[]) {
     
     return 0;
 }
-
-
-//int get_size( const char * dirname ){
-//    struct stat buf;
-//    int exists, total_size=0;
-//    DIR *d;
-//    struct dirent *de;
-//    char * fullname;
-//
-//    d = opendir(dirname);
-//    if (d == NULL) {
-//        fprintf(stderr, "Couldn't open %s\n", dirname);
-//        exit(1);
-//    }
-//
-//    fullname = (char *)malloc(sizeof(char)*(strlen(dirname)+258));
-//
-//    for (de = readdir(d); de != NULL; de = readdir(d)) {
-//        sprintf(fullname, "%s/%s", dirname, de->d_name);
-//
-//        exists = stat(fullname, &buf);
-//        if (exists < 0) {
-//            fprintf(stderr, "%s not found\n", fullname);
-//        }
-//
-//        if( !get_inode( buf.st_ino ) ) {
-//            //inode not yet seen; add to list and process
-//            set_inode( buf.st_ino, fullname );
-//
-//            if (S_ISDIR(buf.st_mode)) {
-//                printf("%10lld %s/\n", buf.st_size, fullname);
-//            } else if (S_ISLNK(buf.st_mode)) {
-//                printf("%10lld %s@\n", buf.st_size, fullname);
-//            } else if (buf.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-//                printf("%10lld %s*\n", buf.st_size, fullname);
-//            } else {
-//                printf("%10lld %s\n", buf.st_size, fullname );
-//            }
-//            total_size+=buf.st_size;
-//        }
-//
-//        /* Make the recursive call if the file is a directory */
-//        if (S_ISDIR(buf.st_mode) && strcmp(de->d_name, ".") !=0 && strcmp(de->d_name, "..") !=0 ) {
-//            total_size += get_size(fullname);
-//        }
-//    }
-//
-//    closedir(d);
-//    return total_size;
-//}
-
 
 

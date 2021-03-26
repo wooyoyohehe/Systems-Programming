@@ -33,7 +33,7 @@ void create_archive (const char* dir_name, char* arch_name) {
     
     exists = lstat(dir_name, &buf);
     if (exists < 0) {
-        fprintf(stderr, "%s not found，exists<0, lstat returns %d\n", dir_name);
+        fprintf(stderr, "%s not found，exists<0,\n", dir_name);
     }
     //set inode, length, name, modification time
     unsigned long inode = buf.st_ino;
@@ -204,7 +204,7 @@ void print_tar(char* arch_name) {
                 //executable file
                 off_t size;
                 fread (&size, 8, 1, tar);
-                printf("%s* -- inode: %lu, mode: %o, mtime: %ld, size: %llu\n", name, inode, mode, mtime, size);
+                printf("%s* -- inode: %lu, mode: %o, mtime: %ld, size: %lu\n", name, inode, mode, mtime, size);
                 //use fseek skip content
                 if (fseek(tar, size, SEEK_CUR)) {
                     perror("ERROR: fseek failed\n");
@@ -214,7 +214,7 @@ void print_tar(char* arch_name) {
                 //regular file
                 off_t size;
                 fread (&size, 8, 1, tar);
-                printf("%s -- inode: %lu, mode: %o, mtime: %ld, size: %llu\n", name, inode, mode, mtime, size);
+                printf("%s -- inode: %lu, mode: %o, mtime: %ld, size: %lu\n", name, inode, mode, mtime, size);
                 if (fseek(tar, size, SEEK_CUR)) {
                     perror("ERROR: fseek failed\n");
                     exit(-1);

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,6 +32,7 @@ void extract (char* arch_name) {
     
     if (tar == NULL) {
         perror("Error: open tar failed");
+        exit(-1);
     }
     
     //check magic num
@@ -41,88 +43,113 @@ void extract (char* arch_name) {
         exit(-1);
     }
     
+    
+//==========begin to read the tar file by iteration===========
     while (!feof(tar)) {
+        //printf("\n- - - - - - - - - - - - - - -\n");
+//        unsigned int name_length;
+//        char* name;
         fread(&inode, 8, 1, tar);
         
+        //only by having accessed the EOF can the feof know if it reaches the end.
+        if (feof(tar))
+            continue;
+        
         fread(&name_length, 4, 1, tar);
+        
+        //printf("name_length: %d\n", name_length);
+        name = (char*) malloc (name_length + 1);
 
-        name = (char*)malloc(sizeof(char)*name_length);
-        fread(name, name_length, 1, tar);
+        fread(name, 1, name_length, tar);
+        name[name_length] = '\0';
+//        printf("NAME: %s   name_length: %d  read_length:%lu\n", name, name_length, strlen(name));
+        
+//        for (int i = 0; i <= name_length; i++) {
+//            printf("[%d]: %c ", i, name[i]);
+//        }
+//        if (name[name_length] == '\0')
+//            printf("is null");
+//
+//        printf("\n");
+//
+        
         
         
         if (!get_inode(inode)) {
+            
             mode_t mode;
             fread(&mode, 4, 1, tar);
+            //printf("name: %s\n", name);
+//            printf("Set InodeMap: inode: %llu NAME: %s\n", inode, name);
+            
             set_inode( inode, name );
+
+//            printf("get_inode right after set: inode: %llu NAME: %s\n", inode, get_inode(inode));
             
-//            struct timeval times[2];
-//            times[0] = malloc(sizeof(struct timeval));
-//            times[1] = malloc(sizeof(struct timeval));
-//            time_t mtime;
-//            time_t currtime;
-//            fread(&mtime, 8, 1, tar);
-//            gettimeofday (&currtime, NULL);
-//            times[0].tv_sec = mtime;
-//            times[0].tv_usec = 0;
-//            times[1].tv_sec = currtime;
-//            times[1].tv_usec = 0;
+//            printf("Before Setting Time\n");
             
+            //set time
             struct timeval mtime;
             struct timeval currtime;
+            
             fread(&(mtime.tv_sec), 8, 1, tar);
             mtime.tv_usec = 0;
-            gettimeofday (&(currtime.tv_sec), NULL);
+            gettimeofday (&currtime, NULL);
             currtime.tv_usec = 0;
             struct timeval times[2];
             times[0] = mtime;
             times[1] = currtime;
+//            printf("currtime: %ld\n", times[1].tv_sec);
             
             if (S_ISDIR(mode)) {
                 //is directory
-                printf("%s/ -- inode: %lu, mode: %o, mtime: %ld\n", name, inode, mode, mtime);
+//                printf("%s/ -- inode: %lu, mode: %o, mtime: %ld\n", name, inode, mode, mtime);
                 if (mkdir(name, mode)) {
-                    perror("mkdir failed \n");
+                    perror("mkdir failed\n");
+                    exit(-1);
+                    //printf("dir_name: %s\n", name);
                 }
                 utimes(name, times);
 //                chmod(name, mode);
+
                 
-            }  else {
-                //regular file and executable
+            } else { //regular file and executable
                 FILE* f = fopen(name, "w");
                 chmod(name, mode);
-                utimes(name, times); //time
                 off_t size;
                 fread (&size, 8, 1, tar);
-                printf("%s -- inode: %lu, mode: %o, mtime: %ld, size: %llu\n", name, inode, mode, mtime, size);
+//                printf("%s -- inode: %lu, mode: %o, mtime: %ld, size: %llu\n", name, inode, mode, mtime, size);
                 
                 //writing content
                 char* content = malloc(sizeof(char) * size);
                 fread (content, size, 1, tar);
                 fwrite(content, size, 1, f);
+                
+                gettimeofday (&currtime, NULL);
+                currtime.tv_usec = 0;
+                times[1] = currtime;
+                
+                utimes(name, times); //time
+                
                 free(content);
                 fclose(f);
-                
-//                if (fseek(tar, size, SEEK_CUR)) {
-//                    perror("ERROR: fseek failed\n");
-//                    exit(-1);
-//                }
             }
 
             
         } else {
             //hard link, inode has been seen
-            char* prfile = get_inode(inode);
-            if (link(prfile, name))  //create hard link to the previous file
-                perror("hard link create failed\n");
-            printf("%s -- inode: %lu\n", name, inode);
-        
+//            printf("GET_Inode returns: inode: %llu %s\n", inode, get_inode(inode));
+            const char* prfile = get_inode(inode);
+            if (link(prfile, name)) {  //create hard link to the previous file
+                perror("hard link create failed: \n");
+                exit(-1);
+//                printf("inode: %llu PreFile name: %s   File name: %s\n", inode, prfile, name);
+            }
+//            printf("%s -- inode: %lu\n", name, inode);
+            
         }
-        
     }
-    
-    
-    
-    
+//=================End of the While loop==============
     
     
     
