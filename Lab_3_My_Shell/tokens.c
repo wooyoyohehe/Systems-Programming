@@ -26,6 +26,7 @@ char ** get_tokens( const char * line ) {
     
     line_copy = strdup( line );
     cur_token = strtok( line_copy, delim );
+    
     if( cur_token == NULL )
         return tokens;
     
