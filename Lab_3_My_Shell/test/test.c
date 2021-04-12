@@ -5,10 +5,48 @@
 //  Created by 龚晨 on 4/9/21.
 //
 
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <inttypes.h>
+
 char* prompt = "mysh: ";
+
+int errno;
+
+char ** get_tokens( const char * line ) {
+    char **tokens=NULL;
+    char * line_copy;
+    const char * delim = " \t\n";
+    char * cur_token;
+    int num_tokens=0;
+    
+    tokens = (char**) malloc( sizeof(char*) );
+    tokens[0] = NULL;
+    
+    if( line == NULL )
+        return tokens;
+    
+    line_copy = strdup( line );
+    cur_token = strtok( line_copy, delim );
+    
+    if( cur_token == NULL )
+        return tokens;
+    
+    do {
+        num_tokens++;
+        tokens = ( char ** ) realloc( tokens, (num_tokens+1) * sizeof( char * ) );
+        tokens[ num_tokens - 1 ] = strdup(cur_token);
+        tokens[ num_tokens ] = NULL;
+    } while( (cur_token = strtok( NULL, delim )) );
+    free(line_copy);
+    
+    return tokens;
+}
 
 void set_prompt (int argc, char* argv[]) {
     char* program_name = argv[0];
@@ -24,6 +62,61 @@ void set_prompt (int argc, char* argv[]) {
     }
     
 }
+void set_cmd(char** tokens);
+
+char** get_cmd() {
+    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
+    char line[1024];
+    //EINTR_flag
+    //while EINTR_flag not true
+    //do fgets
+    int EINTR_flag = 0;
+    do {
+        EINTR_flag = 0;
+        if(fgets(line, 1024, stdin) == NULL) {
+//            fprintf(stderr, "Errno: %s", strerror( errno ) );
+            perror("fgets: ");
+            if (errno == EINTR) {
+                EINTR_flag = 1;
+            } else {
+                break;
+            }
+        }
+    } while (EINTR_flag);
+    if (line[0] == '\n')
+        return NULL;
+    char** tokens = get_tokens(line);
+    set_cmd(tokens);
+    return tokens;
+}
+
+
+int check_operator(char* token) {
+    if (strcmp(token, "<") == 0)
+        return 1;
+    else if (strcmp(token, ">") == 0)
+        return 1;
+    else if (strcmp(token, ">>") == 0)
+        return 1;
+    else if (strcmp(token, "|") == 0)
+        return 1;
+    return 0;
+}
+
+void set_cmd(char** tokens) {
+    
+    for (int i = 0; tokens[i] != NULL; i++) {
+        char c = check_operator(tokens[i]);
+        if (c == 0) {
+            printf("tokens[%d]: is not operator\n", i);
+        } else {
+            printf("tokens[%d]: is operator '%c'\n", i, tokens[i][0]);
+        }
+    }
+    
+    
+}
+
 int main (int argc, char* argv[]) {
     
     //check if prompt offered, no prompt, will print mysh:
@@ -33,21 +126,52 @@ int main (int argc, char* argv[]) {
     set_prompt(argc, argv);
     printf("%s", prompt);
     
-    char a[1024];
+    get_cmd();
     
-//    char c = fgetc(0);
-//    int i = 0;
-//    while (!feof(0)) {
-//
-//        a[i++] = c;
-//        c = fgetc(0);
-//
-//    }
-    
+}
+
+
+
+//can't find the difference between the two do-while
+char** get_cmd1() {
+    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
     char line[1024];
-    if(!fgets(line, 1024, stdin))
-        printf("fgets failed\n");
+    //EINTR_flag
+    //while EINTR_flag not true
+    //do fgets
+    int EINTR_flag = 0;
+    do {
+        EINTR_flag = 0;
+        if(fgets(line, 1024, stdin) == NULL) {
+//            fprintf(stderr, "Errno: %s", strerror( errno ) );
+            perror("fgets: ");
+            if (errno == EINTR) {
+                EINTR_flag = 1;
+            } else {
+                break;
+            }
+        }
+    } while (EINTR_flag);
+//    do {
+//        EINTR_flag = 0;
+//        if(fgets(line, 1024, stdin) == NULL) {
+////            fprintf(stderr, "Errno: %s", strerror( errno ) );
+//            perror("fgets: ");
+//            if (errno == EINTR) {
+//                EINTR_flag = 1;
+//            } else {
+//                break;
+//            }
+//        }
+//    } while (EINTR_flag);
     
-    printf("%s\n", line);
-    
+    if (line[0] == '\n')
+        return NULL;
+    char** tokens = get_tokens(line);
+    CmdSet cmds;
+    if (set_cmds(&cmds, tokens) == -1) {
+        return NULL;
+    }
+    helper_printcmds(&cmds);
+    return tokens;
 }
