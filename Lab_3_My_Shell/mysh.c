@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 typedef struct {
     char* arg[256];
@@ -35,9 +36,11 @@ extern int errno ;
 void set_prompt (int argc, char* argv[]) {
     //first
     char* program_name = argv[0];
-    if (argc > 2)
+    if (argc > 2) {
         fprintf(stderr, "Error: Usage: %s [prompt]\n", program_name);
-    
+        exit(-1);
+    }
+            
     if (argc == 2) {
         if (!strcmp(argv[1], "-")) {
             prompt = "";
@@ -154,6 +157,7 @@ int set_operator(CmdSet* cmdSet, Cmd* cmd, char** tokens, int* p) {
         }
         cmd -> append = 0;
         cmd -> outFile = tokens[*p];
+        //printf("cmd -> outFile: %s\n", cmd -> outFile);
     }
     else if (strcmp(token, ">>") == 0) {
         //if append
@@ -229,6 +233,7 @@ int set_cmds(CmdSet* cmdSet, char** tokens) {
                 if (set_operator(cmdSet, c, tokens, &i) == -1) {
                     return -1;
                 }
+                //printf("c -> outFile: %s\n", c -> outFile);
             } else {
                 newCmd = 1;
             }
@@ -241,13 +246,8 @@ int set_cmds(CmdSet* cmdSet, char** tokens) {
         if (newCmd) {
             //set c to next cmd pointer
             c = cmdSet -> cmdArray[++cmdCount];
-            //c = malloc(sizeof(Cmd));
+            //start counting the argument for cmd
             argCount = 0;
-            /*set the cmd name not have to be the first one.? check example */
-            //可以加一个command set？ flag在前面，没set就set， else 直接加到argument。
-            //或着根本不用check if set， 全都加到argument就行了。 能到这里的都不是operator。
-            
-            //c -> arg[0] = tokens[i];
         }
         //printf("3\n");
         //printf("token %s\n", tokens[i]);
@@ -268,70 +268,11 @@ void display_prompt() {
 }
 
 
-//int main2 (int argc, char* argv[]) {
-//
-//    //check if prompt offered, no prompt, will print mysh:
-//    set_prompt(argc, argv);
-//
-//
-//    //char** token = get_tokens(argv);
-//    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
-//
-//    //char** token;
-//    //int pid;
-//
-//
-//    while(1) {
-//        display_prompt();
-//        int pid;
-//        char**token = get_cmd();
-//        if (token == NULL) {// if no command entered, print another prompt
-//            continue;
-//        }
-//        //printf("%s\n", token[0]);
-//        if( token[0][0]== EOF || strcmp(token[0], "exit") == 0){       //printf("Goodbye!\n");
-//            exit(0);
-//        }
-//
-//        pid = fork();
-//        sleep(3);
-//        if (pid == 0) {
-//            //make sure execvp did not unexpected fail
-//            //printf("child process\n");
-//            int EINTR_flag = 0;
-//            do {
-//                EINTR_flag = 0;
-//                if(execvp(token[0], token) == -1) {
-//    //                fprintf(stderr, "errno: %s\n", strerror( errno ) );
-//                    perror(token[0]);
-//                    if (errno == EINTR) {
-//                        EINTR_flag = 1;
-//                    }
-//                }
-//                exit(-1);
-//
-//            } while (EINTR_flag);
-//            //execvp(token[0], token);
-//
-//        } else {
-//            int wpid;
-//            int status;
-//            wpid = wait(&status);
-//            if (wpid == -1) {
-//                printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
-//            } else {
-//                //printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
-//            }
-//        }
-//        free_tokens(token);
-//    }
-//}
-
 //if pid in pid list, return 1, else return 0;
 int check_pid (int pid_list[], int pid, int cmdNum) {
-    for(int i = 0; i <= cmdNum; i++) {
-        printf("pid[%d]:%d\n",i, pid_list[i]);
-    }
+//    for(int i = 0; i <= cmdNum; i++) {
+//        printf("pid[%d]:%d\n",i, pid_list[i]);
+//    }
     for (int i = 0; i <= cmdNum; i++) {
         if (pid_list[i] == pid)
             return 1;
@@ -384,9 +325,41 @@ int main (int argc, char* argv[]) {
             }
             pid = fork();
             sleep(1);
+            
+        
             if (pid == 0) {
+                //child process
                 //make sure execvp did not unexpected fail
-                printf("child process cmd[%d]\n", n);
+                //printf("child process cmd[%d]\n", n);
+                if (c -> inFile != NULL) {
+                    int fd = open(c -> inFile, O_RDONLY);
+                    if (fd < 0) {
+                        fprintf(stderr, "Error: open(\"%s\"): %s\n", c -> inFile, strerror(errno) );
+                        exit(-1);
+                    }
+                    
+                    dup2(fd, 0);
+                }
+                
+                if (c -> outFile != NULL) {
+                    int fd;
+                    if (c -> append) {
+                        //printf(">> append\n");
+                        fd = open (c -> outFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP |
+                                   S_IROTH);
+                    } else {
+                        //how to check if a file is exist;
+                        //printf("> creat\n");
+                        fd = open (c -> outFile, O_CREAT | O_WRONLY  | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP |
+                                   S_IROTH);
+                    }
+                    if (fd < 0) {
+                        fprintf(stderr, "Error: open(\"%s\"): %s\n", c -> outFile, strerror(errno) );
+                        exit(-1);
+                    }
+                    dup2(fd, 1);
+                }
+                
                 int EINTR_flag = 0;
                 do {
                     EINTR_flag = 0;
@@ -417,18 +390,18 @@ int main (int argc, char* argv[]) {
                 sleep(1);
                 int wpid;
                 int status;
-                printf("===parent waiting\n");
+                //printf("===parent waiting\n");
                 wpid = wait(&status);
                 if (check_pid(pid_list, wpid, cmds.cmdNum)) {
-                    printf("wpid: %d\n", wpid);
+                    //printf("wpid: %d\n", wpid);
                     wpid_count++;
                 } else {
-                    printf("zomie process: %d\n", wpid);
+                    printf("zombie process: %d\n", wpid);
                 }
                 if (wpid == -1) {
                     printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
                 } else {
-                    printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
+                    //printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
                 }
             }
             
