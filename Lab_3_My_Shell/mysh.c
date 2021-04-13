@@ -53,7 +53,9 @@ int set_cmds(CmdSet* cmdSet, char** tokens);
 void helper_printcmds(CmdSet* cmdSet) {
     printf("enterred print cmd\n");
     Cmd* c;
-    printf("first: %s\n", cmdSet -> cmdArray[0] -> arg[0]);
+    //printf("first: %s\n", cmdSet -> cmdArray[0] -> arg[0]);
+    c = cmdSet -> cmdArray[0];
+    printf("cmd : %s\n", c -> arg[0]);
     for (int j = 0; j <= cmdSet -> cmdNum; j++) {
         c = cmdSet -> cmdArray[j];
         for (int i = 0; i < c -> argnum; i++) {
@@ -65,10 +67,12 @@ void helper_printcmds(CmdSet* cmdSet) {
 }
 
 //void init_cmdSet
-
-char** get_cmd() {
+//return -1 on fail
+int get_cmd(CmdSet* cmds) {
     //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
-    CmdSet cmds;
+//    CmdSet* cmds = malloc(sizeof(CmdSet));
+    
+    
     char line[1024];
     //EINTR_flag
     //while EINTR_flag not true
@@ -86,15 +90,18 @@ char** get_cmd() {
             }
         }
     } while (EINTR_flag);
+    //printf("fgets successed\n");
     if (line[0] == '\n')
-        return NULL;
+        return -1;
     char** tokens = get_tokens(line);
     //set_cmd(tokens);
-    if (set_cmds(&cmds, tokens) == -1) {
-        return NULL;
+    if (set_cmds(cmds, tokens) == -1) {
+        return -1;
     }
-    helper_printcmds(&cmds);
-    return tokens;
+    //printf("set cmd succeed\n");
+   // helper_printcmds(cmds);
+   // return tokens;
+    return 0;
 }
 
 
@@ -201,27 +208,31 @@ int set_operator(CmdSet* cmdSet, Cmd* cmd, char** tokens, int* p) {
 
 //return -1 on failure
 int set_cmds(CmdSet* cmdSet, char** tokens) {
+    //printf("set_cmds enterred\n");
     cmdSet -> ifBackground = 0;
+    //printf("1\n");
     int newCmd = 0;
     int i = 0;
     int cmdCount = 0;
     int argCount = 0;
-    Cmd* c = cmdSet -> cmdArray[cmdCount];
+    Cmd* c = cmdSet -> cmdArray[0];
+//    printf("address c: %d\n", c);
+//    printf("address cmdArray[0]: %d\n", cmdSet -> cmdArray[0]);
     while (tokens[i] != NULL) {
         //if it's a operator, set the input/output file and update operator.  Pipe not inplemented.
         //if a pipe, next part would be new command.
         if (check_operator(tokens[i])) {
             //an operator
-            printf("is a operator\n");
+            //printf("is a operator\n");
             if (!is_pipe(tokens[i])) {
-                printf("not a pipe\n");
+                //printf("not a pipe\n");
                 if (set_operator(cmdSet, c, tokens, &i) == -1) {
                     return -1;
                 }
             } else {
                 newCmd = 1;
             }
-            printf("after set_operator\n");
+            //printf("after set_operator\n");
             i++;
             continue;
         }
@@ -230,6 +241,7 @@ int set_cmds(CmdSet* cmdSet, char** tokens) {
         if (newCmd) {
             //set c to next cmd pointer
             c = cmdSet -> cmdArray[++cmdCount];
+            //c = malloc(sizeof(Cmd));
             argCount = 0;
             /*set the cmd name not have to be the first one.? check example */
             //可以加一个command set？ flag在前面，没set就set， else 直接加到argument。
@@ -237,12 +249,15 @@ int set_cmds(CmdSet* cmdSet, char** tokens) {
             
             //c -> arg[0] = tokens[i];
         }
+        //printf("3\n");
+        //printf("token %s\n", tokens[i]);
         c -> arg[argCount++] = tokens[i];
         c -> argnum = argCount;
+        //printf("5\n");
         i++;
         
     }
-    printf("command num: %d", cmdCount);
+    //printf("command num: %d\n", cmdCount);
     cmdSet -> cmdNum = cmdCount;
     return 0;
 
@@ -252,6 +267,87 @@ void display_prompt() {
     printf("%s", prompt);
 }
 
+
+//int main2 (int argc, char* argv[]) {
+//
+//    //check if prompt offered, no prompt, will print mysh:
+//    set_prompt(argc, argv);
+//
+//
+//    //char** token = get_tokens(argv);
+//    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
+//
+//    //char** token;
+//    //int pid;
+//
+//
+//    while(1) {
+//        display_prompt();
+//        int pid;
+//        char**token = get_cmd();
+//        if (token == NULL) {// if no command entered, print another prompt
+//            continue;
+//        }
+//        //printf("%s\n", token[0]);
+//        if( token[0][0]== EOF || strcmp(token[0], "exit") == 0){       //printf("Goodbye!\n");
+//            exit(0);
+//        }
+//
+//        pid = fork();
+//        sleep(3);
+//        if (pid == 0) {
+//            //make sure execvp did not unexpected fail
+//            //printf("child process\n");
+//            int EINTR_flag = 0;
+//            do {
+//                EINTR_flag = 0;
+//                if(execvp(token[0], token) == -1) {
+//    //                fprintf(stderr, "errno: %s\n", strerror( errno ) );
+//                    perror(token[0]);
+//                    if (errno == EINTR) {
+//                        EINTR_flag = 1;
+//                    }
+//                }
+//                exit(-1);
+//
+//            } while (EINTR_flag);
+//            //execvp(token[0], token);
+//
+//        } else {
+//            int wpid;
+//            int status;
+//            wpid = wait(&status);
+//            if (wpid == -1) {
+//                printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
+//            } else {
+//                //printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
+//            }
+//        }
+//        free_tokens(token);
+//    }
+//}
+
+//if pid in pid list, return 1, else return 0;
+int check_pid (int pid_list[], int pid, int cmdNum) {
+    for(int i = 0; i <= cmdNum; i++) {
+        printf("pid[%d]:%d\n",i, pid_list[i]);
+    }
+    for (int i = 0; i <= cmdNum; i++) {
+        if (pid_list[i] == pid)
+            return 1;
+    }
+    return 0;
+}
+
+void init_cmdSet (CmdSet* cmds) {
+    for (int i = 0; i < 256; i++) {
+        cmds -> cmdArray[i] = calloc(256, sizeof(char*));
+    }
+}
+
+void free_cmdSet(CmdSet* cmds) {
+    //
+}
 
 int main (int argc, char* argv[]) {
     
@@ -265,49 +361,79 @@ int main (int argc, char* argv[]) {
     //char** token;
     //int pid;
     
-    
     while(1) {
         display_prompt();
         int pid;
-        char**token = get_cmd();
-        if (token == NULL) {// if no command entered, print another prompt
+        int pid_list[256];
+//        CmdSet* cmds;
+//        cmds = get_cmd();
+        CmdSet cmds;
+        init_cmdSet(&cmds);
+//        char**token = get_cmd();
+        if (get_cmd(&cmds) == -1) {// if no command entered, print another prompt
             continue;
         }
-        //printf("%s\n", token[0]);
-        if( token[0][0]== EOF || strcmp(token[0], "exit") == 0){       //printf("Goodbye!\n");
-            exit(0);
-        }
-
-        pid = fork();
-        sleep(3);
-        if (pid == 0) {
-            //make sure execvp did not unexpected fail
-            //printf("child process\n");
-            int EINTR_flag = 0;
-            do {
-                EINTR_flag = 0;
-                if(execvp(token[0], token) == -1) {
-    //                fprintf(stderr, "errno: %s\n", strerror( errno ) );
-                    perror(token[0]);
-                    if (errno == EINTR) {
-                        EINTR_flag = 1;
+        
+        int n = 0;
+        Cmd* c;
+        //printf("cmdNum: %d\n", cmds.cmdNum);
+        while (n <= (cmds.cmdNum)) {
+            c = cmds.cmdArray[n];
+            if( strcmp(c -> arg[0], "exit") == 0){       //printf("Goodbye!\n");
+                exit(0);
+            }
+            pid = fork();
+            sleep(1);
+            if (pid == 0) {
+                //make sure execvp did not unexpected fail
+                printf("child process cmd[%d]\n", n);
+                int EINTR_flag = 0;
+                do {
+                    EINTR_flag = 0;
+                    if(execvp(c -> arg[0], c -> arg) == -1) {
+        //                fprintf(stderr, "errno: %s\n", strerror( errno ) );
+                        perror(c -> arg[0]);
+                        if (errno == EINTR) {
+                            EINTR_flag = 1;
+                        }
                     }
-                }
-                exit(-1);
-                
-            } while (EINTR_flag);
-            //execvp(token[0], token);
+                    exit(-1);
+                    
+                } while (EINTR_flag);
+            }
+            pid_list[n] = pid;
+            //printf("pid_list[%d]: %d\n", n, pid);
+            n++;
+        }
+        //background or forground
+        if (cmds.ifBackground) {
+            //background, not waiting
+            printf("background running\n");
             
         } else {
-            int wpid;
-            int status;
-            wpid = wait(&status);
-            if (wpid == -1) {
-                printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
-            } else {
-                //printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
+            //foreground, waiting
+            int wpid_count = 0;
+            while (wpid_count <= cmds.cmdNum) {
+                sleep(1);
+                int wpid;
+                int status;
+                printf("===parent waiting\n");
+                wpid = wait(&status);
+                if (check_pid(pid_list, wpid, cmds.cmdNum)) {
+                    printf("wpid: %d\n", wpid);
+                    wpid_count++;
+                } else {
+                    printf("zomie process: %d\n", wpid);
+                }
+                if (wpid == -1) {
+                    printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
+                } else {
+                    printf("parent process, waited wpid: %d with status:%d\n", wpid, status);
+                }
             }
+            
+            
         }
-        free_tokens(token);
+
     }
 }
