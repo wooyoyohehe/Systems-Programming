@@ -116,42 +116,64 @@ void set_cmd(char** tokens) {
     
     
 }
+void printpipe(int a[]) {
+    fprintf(stderr, "pipe 0: %d\n", a[0]);
+    fprintf(stderr, "pipe 1: %d\n", a[1]);
+}
+void printprevpipe(int a[]) {
+    fprintf(stderr, "prevpipe 0: %d\n", a[0]);
+    fprintf(stderr, "prevpipe 1: %d\n", a[1]);
+}
 
 int main (int argc, char* argv[]) {
     
     //check if prompt offered, no prompt, will print mysh:
     //set_prompt(argv[]);
     
-    //printf("%d  %s\n", argc, argv[1]);
-    set_prompt(argc, argv);
-    printf("%s", prompt);
+    int pipefd[2] = {-1, -1};
+    int prevpipefd[2] = {-1, -1};
     
-    get_cmd();
+    pipe(pipefd);
+    printpipe(pipefd);
+    printprevpipe(prevpipefd);
+
+    
+    for (int i = 0; i < 2; i++) {
+        int pid = fork();
+        if (pid ==0) {
+            if (i == 0) {
+                dup2(pipefd[1], 1);
+                close(pipefd[1]);
+                exit(0);
+            } else {
+                printpipe(pipefd);
+                printprevpipe(prevpipefd);
+                dup2(prevpipefd[0], 0);
+                close(prevpipefd[0]);
+                exit(0);
+            }
+        }
+
+        prevpipefd[0] = pipefd[0];
+        prevpipefd[1] = pipefd[1];
+        printpipe(pipefd);
+        printprevpipe(prevpipefd);
+        
+        
+    }
     
 }
 
 
 
 //can't find the difference between the two do-while
-char** get_cmd1() {
-    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
-    char line[1024];
-    //EINTR_flag
-    //while EINTR_flag not true
-    //do fgets
-    int EINTR_flag = 0;
-    do {
-        EINTR_flag = 0;
-        if(fgets(line, 1024, stdin) == NULL) {
-//            fprintf(stderr, "Errno: %s", strerror( errno ) );
-            perror("fgets: ");
-            if (errno == EINTR) {
-                EINTR_flag = 1;
-            } else {
-                break;
-            }
-        }
-    } while (EINTR_flag);
+//char** get_cmd1() {
+//    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
+//    char line[1024];
+//    //EINTR_flag
+//    //while EINTR_flag not true
+//    //do fgets
+//    int EINTR_flag = 0;
 //    do {
 //        EINTR_flag = 0;
 //        if(fgets(line, 1024, stdin) == NULL) {
@@ -164,14 +186,26 @@ char** get_cmd1() {
 //            }
 //        }
 //    } while (EINTR_flag);
-    
-    if (line[0] == '\n')
-        return NULL;
-    char** tokens = get_tokens(line);
-    CmdSet cmds;
-    if (set_cmds(&cmds, tokens) == -1) {
-        return NULL;
-    }
-    helper_printcmds(&cmds);
-    return tokens;
-}
+////    do {
+////        EINTR_flag = 0;
+////        if(fgets(line, 1024, stdin) == NULL) {
+//////            fprintf(stderr, "Errno: %s", strerror( errno ) );
+////            perror("fgets: ");
+////            if (errno == EINTR) {
+////                EINTR_flag = 1;
+////            } else {
+////                break;
+////            }
+////        }
+////    } while (EINTR_flag);
+//
+//    if (line[0] == '\n')
+//        return NULL;
+//    char** tokens = get_tokens(line);
+//    CmdSet cmds;
+//    if (set_cmds(&cmds, tokens) == -1) {
+//        return NULL;
+//    }
+//    helper_printcmds(&cmds);
+//    return tokens;
+//}
