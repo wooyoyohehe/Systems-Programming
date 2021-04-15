@@ -63,10 +63,10 @@ void helper_printcmds(CmdSet* cmdSet) {
     //printf("cmd : %s\n", c -> arg[0]);
     for (int j = 0; j <= cmdSet -> cmdNum; j++) {
         c = cmdSet -> cmdArray[j];
-//        for (int i = 0; i < c -> argnum; i++) {
-//            printf("arg[%d]: %s\n", i, c -> arg[i]);
-//        }
-        fprintf(stderr, "in helper inFile: %s\n", c -> inFile);
+        for (int i = 0; i < c -> argnum; i++) {
+            printf("arg[%d]: %s\n", i, c -> arg[i]);
+        }
+        //fprintf(stderr, "in helper inFile: %s\n", c -> inFile);
     }
 
    // printf("exited print cmd\n");
@@ -108,7 +108,6 @@ int get_cmd(CmdSet* cmds) {
     }
     //printf("set cmd succeed\n");
     //helper_printcmds(cmds);
-   // return tokens;
     return 0;
 }
 
@@ -265,20 +264,12 @@ int set_cmds(CmdSet* cmdSet, char** tokens) {
             //start counting the argument for cmd
             argCount = 0;
             //fprintf(stderr, "2 inFile: %s\n", cmdSet -> cmdArray[0] -> inFile);
+            newCmd = 0;
         }
-        //printf("3\n");
-        //printf("token %s\n", tokens[i]);
-        //fprintf(stderr, "2.25 inFile: %s\n", cmdSet -> cmdArray[0] -> inFile);
-        //fprintf(stderr, "1c -> arg: %s\n", c -> arg[argCount]);
         
         c -> arg[argCount++] = tokens[i];
-        //fprintf(stderr, "2c -> arg: %s\n", c -> arg[argCount - 1]);
-        //c -> arg[0] = tokens[i];
-        //fprintf(stderr, "2.5 inFile: %s\n", cmdSet -> cmdArray[0] -> inFile);
         c -> argnum = argCount;
-        //printf("5\n");
         i++;
-        //fprintf(stderr, "3 inFile: %s\n", cmdSet -> cmdArray[0] -> inFile);
         
     }
     //printf("command num: %d\n", cmdCount);
@@ -304,9 +295,6 @@ void display_prompt() {
 
 //if pid in pid list, return 1, else return 0;
 int check_pid (int pid_list[], int pid, int cmdNum) {
-//    for(int i = 0; i <= cmdNum; i++) {
-//        printf("pid[%d]:%d\n",i, pid_list[i]);
-//    }
     for (int i = 0; i <= cmdNum; i++) {
         if (pid_list[i] == pid)
             return 1;
@@ -338,34 +326,21 @@ int main (int argc, char* argv[]) {
     //check if prompt offered, no prompt, will print mysh:
     set_prompt(argc, argv);
     
-    
-    //char** token = get_tokens(argv);
-    //Check fgets() and wait() for premature returns due to system interruption: if fgets() or wait() fails and errno == EINTR, try the call again!
-    
-    //char** token;
-    //int pid;
-    
     while(1) {
         display_prompt();
         int pid;
         int pid_list[256];
-//        CmdSet* cmds;
-//        cmds = get_cmd();
         CmdSet cmds;
         init_cmdSet(&cmds);
         int pipefd[2] = {-1, -1};
         int prevpipefd[2] = {-1, -1};
-//        char**token = get_cmd();
+
         if (get_cmd(&cmds) == -1) {// if no command entered, print another prompt
             continue;
         }
         
         int n = 0;
         Cmd* c;
-        //printf("cmdNum: %d\n", cmds.cmdNum);
-//        printpipe(pipefd);
-//        printprevpipe(prevpipefd);
-        
         
         while (n <= (cmds.cmdNum)) {
             c = cmds.cmdArray[n];
@@ -499,7 +474,7 @@ int main (int argc, char* argv[]) {
         //background or forground
         if (cmds.ifBackground) {
             //background, not waiting
-            printf("background running\n");
+            //printf("background running\n");
             
         } else {
             //foreground, waiting
@@ -514,7 +489,7 @@ int main (int argc, char* argv[]) {
                     //printf("wpid: %d\n", wpid);
                     wpid_count++;
                 } else {
-                    printf("zombie process: %d\n", wpid);
+                    //printf("process: %d done\n", wpid);
                 }
                 if (wpid == -1) {
                     printf("\nParent (%d): wait(): %s\n", getpid(), strerror(errno));
