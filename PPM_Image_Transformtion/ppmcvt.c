@@ -66,8 +66,6 @@ int main( int argc, char *argv[] )
     
     
     
-    
-    
     return 0;
 }
 
@@ -334,6 +332,17 @@ void option_r(Option op, PPMImage* image_in){
     del_ppmimage(image_in);
 }
 
+//int min(int a, int b){
+//    if(a < b){
+//        return a;
+//    }else{
+//        return b;
+//    }
+//    return a < b ? a : b;
+//}
+//
+//#define min(a, b) (((a) < (b)) ? (a) : (b))
+
 void option_s(Option op, PPMImage* image_in){
     //apply a sepia transformation
     
@@ -354,7 +363,7 @@ void option_s(Option op, PPMImage* image_in){
             float oldG = (float)image_in -> pixmap[1][r][c];
             float oldB = (float)image_in -> pixmap[2][r][c];
             
-            float newR, newG, newB;
+            int newR, newG, newB;
             newR = 0.393 * oldR + 0.769 * oldG + 0.189 * oldB;
             newG = 0.349 * oldR + 0.686 * oldG + 0.168 * oldB;
             newB = 0.272 * oldR + 0.534 * oldG + 0.131 * oldB;
