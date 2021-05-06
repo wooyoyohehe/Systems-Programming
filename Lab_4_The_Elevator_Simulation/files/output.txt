@@ -1,0 +1,52 @@
+   0.937: Sofia Riley(0) arrives at floor 01 wanting to go to floor 04.
+   0.937: Elevator 01 moving from floor 01 to floor 01.
+   0.937: Elevator 01 arrives at floor 01.
+   0.937: Elevator 01 opening its door.
+   1.937: Elevator 01 door is open.
+   1.937: Sofia Riley(0) gets on elevator 01 on floor 01.
+   1.937: Elevator 01 closing its door.
+   2.937: Elevator 01 door is closed.
+   2.937: Elevator 01 moving from floor 01 to floor 04.
+   5.937: Elevator 01 arrives at floor 04.
+   5.937: Elevator 01 opening its door.
+   6.828: Christopher Naivete(1) arrives at floor 02 wanting to go to floor 03.
+   6.937: Elevator 01 door is open.
+   6.937: Sofia Riley(0) gets off elevator 01 on floor 04.
+   6.937: Sofia Riley(0) is done.
+   6.937: Elevator 01 closing its door.
+   7.937: Elevator 01 door is closed.
+   7.937: Elevator 01 moving from floor 04 to floor 02.
+   9.335: Devin Exploration(2) arrives at floor 02 wanting to go to floor 01.
+   9.768: Claire Describe(3) arrives at floor 03 wanting to go to floor 01.
+   9.937: Elevator 01 arrives at floor 02.
+   9.937: Elevator 01 opening its door.
+  10.937: Elevator 01 door is open.
+  10.937: Christopher Naivete(1) gets on elevator 01 on floor 02.
+  10.937: Elevator 01 closing its door.
+  11.937: Elevator 01 door is closed.
+  11.937: Elevator 01 moving from floor 02 to floor 03.
+  12.937: Elevator 01 arrives at floor 03.
+  12.937: Elevator 01 opening its door.
+  13.937: Elevator 01 door is open.
+  13.937: Christopher Naivete(1) gets off elevator 01 on floor 03.
+  13.937: Christopher Naivete(1) is done.
+  13.937: Elevator 01 closing its door.
+  13.972: Savannah Buffet(4) arrives at floor 01 wanting to go to floor 05.
+  14.937: Elevator 01 door is closed.
+  14.937: Elevator 01 moving from floor 03 to floor 02.
+  15.480: Jonathan Magpie(5) arrives at floor 02 wanting to go to floor 04.
+  15.609: Jason Stanch(6) arrives at floor 01 wanting to go to floor 05.
+  15.937: Elevator 01 arrives at floor 02.
+  15.937: Elevator 01 opening its door.
+  16.937: Elevator 01 door is open.
+  16.937: Devin Exploration(2) gets on elevator 01 on floor 02.
+  16.937: Elevator 01 closing its door.
+  17.937: Elevator 01 door is closed.
+  17.937: Elevator 01 moving from floor 02 to floor 01.
+  18.937: Elevator 01 arrives at floor 01.
+  18.937: Elevator 01 opening its door.
+  19.937: Elevator 01 door is open.
+  19.937: Devin Exploration(2) gets off elevator 01 on floor 01.
+  19.937: Devin Exploration(2) is done.
+  19.937: Elevator 01 closing its door.
+  20.000: Simulation Over.          7 Started.           3 Finished.

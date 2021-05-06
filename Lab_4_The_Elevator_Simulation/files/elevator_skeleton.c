@@ -186,7 +186,7 @@ void *person(void *arg)
   Person *p;
 
   p = (Person *) arg;
-    printf("person: %s, before lock\n", p->fname);
+    //printf("person: %s, before lock\n", p->fname);
   pthread_mutex_lock(p->es->lock);
   p->es->npeople_started++;
   printf("%8.3lf: %s %s arrives at floor %02d wanting to go to floor %02d.\n", finesleep_time(FINESLEEPER), 
